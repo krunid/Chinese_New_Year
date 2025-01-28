@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Game: วันตรุษจีน</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #ffccff, #ccffff);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .quiz-container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            width: 400px;
+        }
+        .question {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        .options button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 5px;
+            background: #f0f0f0;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .options button:hover {
+            background: #ddd;
+        }
+        .timer {
+            font-size: 20px;
+            margin: 10px 0;
+            color: #ff6666;
+        }
+        .score {
+            font-size: 18px;
+            margin: 10px 0;
+        }
+        .result {
+            font-size: 20px;
+            margin-top: 20px;
+            color: #333;
+        }
+        .restart-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background: #ff6666;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .restart-button:hover {
+            background: #ff4d4d;
+        }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <h1>Quiz Game: วันตรุษจีน 🎉</h1>
+        <div class="question" id="question"></div>
+        <div class="options" id="options"></div>
+        <div class="timer" id="timer">เวลาเหลือ: 60 วินาที</div>
+        <div class="score" id="score">คะแนน: 0</div>
+        <div class="result" id="result"></div>
+        <button class="restart-button" id="restart-button" style="display: none;">เริ่มเกมใหม่</button>
+    </div>
+        <!-- Footer -->
+        <footer>
+            <p>จัดทำโดย: ครูนิด ศิษย์หลวงพ่อเสือ</p>
+            <p>ลิขสิทธิ์โปรแกรม © 2023</p>
+        </footer>
+    <script>
+        const questions = [
+            {
+                question: "วันตรุษจีนตรงกับวันใดในปฏิทินจันทรคติ?",
+                options: ["วันขึ้น 1 ค่ำ เดือน 1", "วันขึ้น 15 ค่ำ เดือน 1", "วันแรม 1 ค่ำ เดือน 1", "วันแรม 15 ค่ำ เดือน 1"],
+                answer: 0
+            },
+            {
+                question: "สีแดงในวันตรุษจีนมีความหมายว่าอย่างไร?",
+                options: ["โชคลาภ", "ความเศร้า", "ความสุข", "ความโกรธ"],
+                answer: 0
+            },
+            {
+                question: "อาหารใดที่นิยมรับประทานในวันตรุษจีน?",
+                options: ["ขนมจ้าง", "ขนมไหว้พระจันทร์", "ขนมเทียน", "ขนมเข่ง"],
+                answer: 3
+            },
+            {
+                question: "สัตว์ประจำปี 2566 ตามปฏิทินจีนคืออะไร?",
+                options: ["วัว", "เสือ", "กระต่าย", "มังกร"],
+                answer: 2
+            },
+            {
+                question: "การไหว้เจ้าในวันตรุษจีนมีจุดประสงค์หลักเพื่ออะไร?",
+                options: ["ขอโชคลาภ", "ขอสุขภาพ", "ขอความรัก", "ขอโชคชะตา"],
+                answer: 0
+            },
+            {
+                question: "ข้อใดคือสัญลักษณ์ของวันตรุษจีน?",
+                options: ["ต้นคริสต์มาส", "ต้นไผ่", "ต้นหลิว", "ต้นเบญจมาศ"],
+                answer: 1
+            },
+            {
+                question: "การจุดประทัดในวันตรุษจีนมีความเชื่อว่าอย่างไร?",
+                options: ["ขับไล่สิ่งชั่วร้าย", "เรียกโชคลาภ", "เพิ่มความสุข", "เสริมสุขภาพ"],
+                answer: 0
+            },
+            {
+                question: "คำอวยพรที่นิยมใช้ในวันตรุษจีนคือข้อใด?",
+                options: ["สุขสันต์วันเกิด", "สวัสดีปีใหม่", "สุขสันต์วันคริสต์มาส", "สุขสันต์วันวาเลนไทน์"],
+                answer: 1
+            },
+            {
+                question: "ข้อใดไม่ใช่กิจกรรมในวันตรุษจีน?",
+                options: ["การไหว้บรรพบุรุษ", "การแลกเปลี่ยนอั่งเปา", "การจุดพลุ", "การปลูกต้นไม้"],
+                answer: 3
+            },
+            {
+                question: "อั่งเปามีความหมายว่าอย่างไร?",
+                options: ["เงินขวัญถุง", "ขนม", "ของขวัญ", "ดอกไม้"],
+                answer: 0
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let timeLeft = 60;
+        let timer;
+
+        const questionElement = document.getElementById('question');
+        const optionsElement = document.getElementById('options');
+        const timerElement = document.getElementById('timer');
+        const scoreElement = document.getElementById('score');
+        const resultElement = document.getElementById('result');
+        const restartButton = document.getElementById('restart-button');
+
+        function startGame() {
+            currentQuestionIndex = 0;
+            score = 0;
+            timeLeft = 60;
+            scoreElement.textContent = 'คะแนน: 0';
+            resultElement.textContent = '';
+            restartButton.style.display = 'none';
+            loadQuestion();
+            startTimer();
+        }
+
+        function loadQuestion() {
+            const currentQuestion = questions[currentQuestionIndex];
+            questionElement.textContent = currentQuestion.question;
+            optionsElement.innerHTML = '';
+            currentQuestion.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.addEventListener('click', () => checkAnswer(index));
+                optionsElement.appendChild(button);
+            });
+        }
+
+        function checkAnswer(selectedIndex) {
+            const currentQuestion = questions[currentQuestionIndex];
+            if (selectedIndex === currentQuestion.answer) {
+                score += 1;
+            } else {
+                score -= 1;
+            }
+            scoreElement.textContent = `คะแนน: ${score}`;
+            nextQuestion();
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questions.length) {
+                loadQuestion();
+            } else {
+                endGame();
+            }
+        }
+
+        function startTimer() {
+            timer = setInterval(() => {
+                timeLeft--;
+                timerElement.textContent = `เวลาเหลือ: ${timeLeft} วินาที`;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function endGame() {
+            clearInterval(timer);
+            questionElement.textContent = 'จบเกม!';
+            optionsElement.innerHTML = '';
+            timerElement.textContent = '';
+            resultElement.textContent = `คุณได้คะแนนทั้งหมด ${score} คะแนน`;
+            restartButton.style.display = 'block';
+        }
+
+        restartButton.addEventListener('click', startGame);
+
+        startGame();
+    </script>
+</body>
+</html>
