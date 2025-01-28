@@ -54,7 +54,13 @@
             margin-top: 20px;
             color: #333;
         }
-        .restart-button {
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .restart-button, .answer-button, .ranking-button {
             padding: 10px 20px;
             border: none;
             border-radius: 5px;
@@ -63,8 +69,89 @@
             cursor: pointer;
             font-size: 16px;
         }
-        .restart-button:hover {
+        .restart-button:hover, .answer-button:hover, .ranking-button:hover {
             background: #ff4d4d;
+        }
+        .popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            max-width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+        .popup-content {
+            text-align: left;
+        }
+        .close-button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            background: #ff6666;
+            color: white;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .close-button:hover {
+            background: #ff4d4d;
+        }
+        .credits {
+            font-size: 14px;
+            margin-top: 20px;
+            color: #666;
+        }
+        .answer-item {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+        .correct {
+            color: green;
+        }
+        .incorrect {
+            color: red;
+        }
+        .answer-status {
+            font-weight: bold;
+        }
+        .ranking-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .ranking-table th, .ranking-table td {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+        .ranking-table th {
+            background-color: #ff6666;
+            color: white;
+            font-weight: bold;
+        }
+        .ranking-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .ranking-table tr:hover {
+            background-color: #f1f1f1;
         }
     </style>
 </head>
@@ -76,65 +163,108 @@
         <div class="timer" id="timer">เวลาเหลือ: 60 วินาที</div>
         <div class="score" id="score">คะแนน: 0</div>
         <div class="result" id="result"></div>
-        <button class="restart-button" id="restart-button" style="display: none;">เริ่มเกมใหม่</button>
-    
-        <!-- Footer -->
-        <footer>
-            <p>จัดทำโดย: ครูนิด ศิษย์หลวงพ่อเสือ</p>
-            <p>ลิขสิทธิ์โปรแกรม © 2023</p>
-        </footer>
+        <div class="button-container">
+            <button class="restart-button" id="restart-button" style="display: none;">เริ่มเกมใหม่</button>
+            <button class="answer-button" id="answer-button" style="display: none;">เฉลย</button>
+            <button class="ranking-button" id="ranking-button" style="display: none;">จัดอันดับ</button>
+        </div>
+        <div class="credits">
+            <p>ผู้จัดทำ: ครูนิด ศิษย์หลวงพ่อเสือ</p>
+            <p>ลิขสิทธิ์โปรแกรม © 2025</p>
+        </div>
     </div>
-        <script>
+
+    <!-- Popup สำหรับเฉลย -->
+    <div class="popup-overlay" id="answer-popup-overlay"></div>
+    <div class="popup" id="answer-popup">
+        <div class="popup-content">
+            <h2>เฉลยทั้งหมด</h2>
+            <div id="all-answers"></div>
+            <button class="close-button" id="close-answer-popup">ปิด</button>
+        </div>
+    </div>
+
+    <!-- Popup สำหรับจัดอันดับ -->
+    <div class="popup-overlay" id="ranking-popup-overlay"></div>
+    <div class="popup" id="ranking-popup">
+        <div class="popup-content">
+            <h2>จัดอันดับ</h2>
+            <table class="ranking-table">
+                <thead>
+                    <tr>
+                        <th>อันดับ</th>
+                        <th>ชื่อ</th>
+                        <th>คะแนน</th>
+                        <th>เวลาที่เหลือ</th>
+                    </tr>
+                </thead>
+                <tbody id="ranking-table-body"></tbody>
+            </table>
+            <button class="close-button" id="close-ranking-popup">ปิด</button>
+        </div>
+    </div>
+
+    <script>
         const questions = [
             {
                 question: "วันตรุษจีนตรงกับวันใดในปฏิทินจันทรคติ?",
                 options: ["วันขึ้น 1 ค่ำ เดือน 1", "วันขึ้น 15 ค่ำ เดือน 1", "วันแรม 1 ค่ำ เดือน 1", "วันแรม 15 ค่ำ เดือน 1"],
-                answer: 0
+                answer: 0,
+                explanation: "วันตรุษจีนตรงกับวันขึ้น 1 ค่ำ เดือน 1 ตามปฏิทินจันทรคติ"
             },
             {
                 question: "สีแดงในวันตรุษจีนมีความหมายว่าอย่างไร?",
                 options: ["โชคลาภ", "ความเศร้า", "ความสุข", "ความโกรธ"],
-                answer: 0
+                answer: 0,
+                explanation: "สีแดงในวันตรุษจีนเป็นสัญลักษณ์ของโชคลาภและความสุข"
             },
             {
                 question: "อาหารใดที่นิยมรับประทานในวันตรุษจีน?",
                 options: ["ขนมจ้าง", "ขนมไหว้พระจันทร์", "ขนมเทียน", "ขนมเข่ง"],
-                answer: 3
+                answer: 3,
+                explanation: "ขนมเข่งเป็นอาหารที่นิยมรับประทานในวันตรุษจีน"
             },
             {
                 question: "สัตว์ประจำปี 2566 ตามปฏิทินจีนคืออะไร?",
                 options: ["วัว", "เสือ", "กระต่าย", "มังกร"],
-                answer: 2
+                answer: 2,
+                explanation: "ปี 2566 เป็นปีกระต่ายตามปฏิทินจีน"
             },
             {
                 question: "การไหว้เจ้าในวันตรุษจีนมีจุดประสงค์หลักเพื่ออะไร?",
                 options: ["ขอโชคลาภ", "ขอสุขภาพ", "ขอความรัก", "ขอโชคชะตา"],
-                answer: 0
+                answer: 0,
+                explanation: "การไหว้เจ้าในวันตรุษจีนมีจุดประสงค์หลักเพื่อขอโชคลาภ"
             },
             {
                 question: "ข้อใดคือสัญลักษณ์ของวันตรุษจีน?",
                 options: ["ต้นคริสต์มาส", "ต้นไผ่", "ต้นหลิว", "ต้นเบญจมาศ"],
-                answer: 1
+                answer: 1,
+                explanation: "ต้นไผ่เป็นสัญลักษณ์ของวันตรุษจีน"
             },
             {
                 question: "การจุดประทัดในวันตรุษจีนมีความเชื่อว่าอย่างไร?",
                 options: ["ขับไล่สิ่งชั่วร้าย", "เรียกโชคลาภ", "เพิ่มความสุข", "เสริมสุขภาพ"],
-                answer: 0
+                answer: 0,
+                explanation: "การจุดประทัดในวันตรุษจีนมีความเชื่อว่าขับไล่สิ่งชั่วร้าย"
             },
             {
                 question: "คำอวยพรที่นิยมใช้ในวันตรุษจีนคือข้อใด?",
                 options: ["สุขสันต์วันเกิด", "สวัสดีปีใหม่", "สุขสันต์วันคริสต์มาส", "สุขสันต์วันวาเลนไทน์"],
-                answer: 1
+                answer: 1,
+                explanation: "คำอวยพรที่นิยมใช้ในวันตรุษจีนคือ 'สวัสดีปีใหม่'"
             },
             {
                 question: "ข้อใดไม่ใช่กิจกรรมในวันตรุษจีน?",
                 options: ["การไหว้บรรพบุรุษ", "การแลกเปลี่ยนอั่งเปา", "การจุดพลุ", "การปลูกต้นไม้"],
-                answer: 3
+                answer: 3,
+                explanation: "การปลูกต้นไม้ไม่ใช่กิจกรรมในวันตรุษจีน"
             },
             {
                 question: "อั่งเปามีความหมายว่าอย่างไร?",
                 options: ["เงินขวัญถุง", "ขนม", "ของขวัญ", "ดอกไม้"],
-                answer: 0
+                answer: 0,
+                explanation: "อั่งเปาหมายถึงเงินขวัญถุงที่ให้กันในวันตรุษจีน"
             }
         ];
 
@@ -142,6 +272,8 @@
         let score = 0;
         let timeLeft = 60;
         let timer;
+        let userAnswers = [];
+        let ranking = [];
 
         const questionElement = document.getElementById('question');
         const optionsElement = document.getElementById('options');
@@ -149,14 +281,29 @@
         const scoreElement = document.getElementById('score');
         const resultElement = document.getElementById('result');
         const restartButton = document.getElementById('restart-button');
+        const answerButton = document.getElementById('answer-button');
+        const rankingButton = document.getElementById('ranking-button');
+
+        const answerPopup = document.getElementById('answer-popup');
+        const answerPopupOverlay = document.getElementById('answer-popup-overlay');
+        const allAnswersElement = document.getElementById('all-answers');
+        const closeAnswerPopupButton = document.getElementById('close-answer-popup');
+
+        const rankingPopup = document.getElementById('ranking-popup');
+        const rankingPopupOverlay = document.getElementById('ranking-popup-overlay');
+        const rankingTableBody = document.getElementById('ranking-table-body');
+        const closeRankingPopupButton = document.getElementById('close-ranking-popup');
 
         function startGame() {
             currentQuestionIndex = 0;
             score = 0;
             timeLeft = 60;
+            userAnswers = [];
             scoreElement.textContent = 'คะแนน: 0';
             resultElement.textContent = '';
             restartButton.style.display = 'none';
+            answerButton.style.display = 'none';
+            rankingButton.style.display = 'none';
             loadQuestion();
             startTimer();
         }
@@ -175,6 +322,13 @@
 
         function checkAnswer(selectedIndex) {
             const currentQuestion = questions[currentQuestionIndex];
+            userAnswers.push({
+                question: currentQuestion.question,
+                userAnswer: currentQuestion.options[selectedIndex],
+                correctAnswer: currentQuestion.options[currentQuestion.answer],
+                explanation: currentQuestion.explanation,
+                isCorrect: selectedIndex === currentQuestion.answer
+            });
             if (selectedIndex === currentQuestion.answer) {
                 score += 1;
             } else {
@@ -210,9 +364,68 @@
             optionsElement.innerHTML = '';
             timerElement.textContent = '';
             resultElement.textContent = `คุณได้คะแนนทั้งหมด ${score} คะแนน`;
-            restartButton.style.display = 'block';
+            restartButton.style.display = 'inline-block';
+            answerButton.style.display = 'inline-block';
+            rankingButton.style.display = 'inline-block';
+            saveRanking();
         }
 
+        function saveRanking() {
+            const playerName = prompt("กรุณากรอกชื่อของคุณ:");
+            if (playerName) {
+                ranking.push({ name: playerName, score: score, timeLeft: timeLeft });
+                ranking.sort((a, b) => b.score - a.score || b.timeLeft - a.timeLeft);
+            }
+        }
+
+        function showAnswerPopup() {
+            allAnswersElement.innerHTML = '';
+            userAnswers.forEach((answer, index) => {
+                const answerItem = document.createElement('div');
+                answerItem.classList.add('answer-item');
+                answerItem.innerHTML = `
+                    <p><strong>คำถามที่ ${index + 1}:</strong> ${answer.question}</p>
+                    <p>คำตอบของคุณ: ${answer.userAnswer}</p>
+                    <p>คำตอบที่ถูกต้อง: ${answer.correctAnswer}</p>
+                    <p class="answer-status ${answer.isCorrect ? 'correct' : 'incorrect'}">
+                        ${answer.isCorrect ? '✔ ถูกต้อง' : '✖ ผิด'}
+                    </p>
+                    <p>คำอธิบาย: ${answer.explanation}</p>
+                `;
+                allAnswersElement.appendChild(answerItem);
+            });
+            answerPopup.style.display = 'block';
+            answerPopupOverlay.style.display = 'block';
+        }
+
+        function showRankingPopup() {
+            rankingTableBody.innerHTML = '';
+            ranking.forEach((player, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${player.name}</td>
+                    <td>${player.score}</td>
+                    <td>${player.timeLeft}</td>
+                `;
+                rankingTableBody.appendChild(row);
+            });
+            rankingPopup.style.display = 'block';
+            rankingPopupOverlay.style.display = 'block';
+        }
+
+        closeAnswerPopupButton.addEventListener('click', () => {
+            answerPopup.style.display = 'none';
+            answerPopupOverlay.style.display = 'none';
+        });
+
+        closeRankingPopupButton.addEventListener('click', () => {
+            rankingPopup.style.display = 'none';
+            rankingPopupOverlay.style.display = 'none';
+        });
+
+        answerButton.addEventListener('click', showAnswerPopup);
+        rankingButton.addEventListener('click', showRankingPopup);
         restartButton.addEventListener('click', startGame);
 
         startGame();
